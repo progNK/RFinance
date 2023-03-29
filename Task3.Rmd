@@ -1,0 +1,81 @@
+---
+title: "Task3"
+author: "Надия Кадерова"
+date: "2023-03-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Загружаем данные:
+```{r}
+
+data <- read.table("/Users/NK/Downloads/Stocks1.csv", sep=',', header=T)
+head(data)
+
+n <- dim(data)[1]
+n
+```
+
+x - зависимая переменная (акции Сбер)
+```{r}
+x <- diff(log(data$SBER))
+```
+Предикторы: 
+```{r}
+p1 <- diff(log(data$SANDP))
+p2 <- diff(log(data$COMEX))
+p3 <- diff(log(data$BRENT))
+p4 <- diff(log(data$COPPER))
+p5 <- diff(log(data$EURO))
+p6 <- diff(log(data$RUB))
+```
+Построим регрессионную модель:
+```{r}
+model1 <- lm(x ~ p1 + p2 + p3 + p4 + p5 + p6)
+summary(model1)
+```
+Получаем, что значимыми являются предикторы p1 и p6 (это индекс S&P500 и RUB/USD),
+незначимые предикторы: p2 (Золото), p3 (Нефть.Брент), p4 (Медь), p5 (USD / Euro).
+Модель не является вырожденной, так как p-значение позволяет отвергнуть гипотезу об отсутствии связи между зависимой переменной и моделью регрессии
+
+Переоценим модель только для значимых переменных:
+```{r}
+model2 <- lm(x ~ p1 + p6)
+summary(model2)
+```
+Теперь исследуем остатки:
+```{r}
+plot(y=rstudent(model2),x=c(1:length(rstudent(model2))),xlab="Time",ylab="Standardized Residuals",type = "o", col = "blue",lwd=1)
+
+hist(rstudent(model2),xlab='Standardized Residuals', col = "blue")
+```
+
+По графику и гистограмме можно сказать, что, скорее, остатки не распределены нормально.
+
+Проверим:
+```{r}
+library(car)
+qqnorm(rstudent(model2),col="red")
+qqPlot(rstudent(model2), distribution = "norm", envelope = list(style = "lines"), pch = 16,
+       main = "Q-Q N(0,1) plot", ylab = "Sample Quantiles",
+       xlab = "Theoretical Quantiles")
+
+```
+Распределение остатков сильно выходит за доверительную кривую
+```{r}
+shapiro.test((rstudent(model2)))
+```
+По результатам теста гипотеза о нормальном распределении остатков отвергается.
+
+Теперь проверим некоррелируемость остатков:
+
+```{r}
+acf(rstudent(model2))
+```
+
+Видим, что не все автокорреляции лежат внутри доверительной полосы, значит, остатки не являются белым шумом
+
+
+
