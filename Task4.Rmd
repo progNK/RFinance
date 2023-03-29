@@ -1,0 +1,35 @@
+---
+title: "Untitled"
+author: "Надия Кадерова"
+date: "2023-03-25"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+train <-read.table('/Users/NK/Downloads/testFiles/var_6_train.csv',header=T,sep= ',')
+head(train)
+test <-read.table('/Users/NK/Downloads/testFiles/var_6_test.csv',header=T,sep= ',')
+head(test)
+```
+
+```{r}
+m<-glm(train$output~., data=train, family=gaussian())
+summary(m)
+```
+
+```{r}
+m <- step(m)
+```
+
+```{r}
+score<-predict(m,type='response',test)
+ans <- as.integer(score > 0.5)
+write.csv(ans, file="/Users/NK/Downloads/ans2.csv", quote = FALSE, row.names = F)
+```
+
+
